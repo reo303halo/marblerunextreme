@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1134DB852E49E6CC000EB0D0"
-               BuildableName = "TestingTesting"
-               BlueprintName = "TestingTesting"
-               ReferencedContainer = "container:TestingTesting.xcodeproj">
+               BuildableName = "MarbleRunExtreme"
+               BlueprintName = "MarbleRunExtreme"
+               ReferencedContainer = "container:MarbleRunExtreme.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -49,9 +49,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1134DB852E49E6CC000EB0D0"
-            BuildableName = "TestingTesting"
-            BlueprintName = "TestingTesting"
-            ReferencedContainer = "container:TestingTesting.xcodeproj">
+            BuildableName = "MarbleRunExtreme"
+            BlueprintName = "MarbleRunExtreme"
+            ReferencedContainer = "container:MarbleRunExtreme.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -66,9 +66,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1134DB852E49E6CC000EB0D0"
-            BuildableName = "TestingTesting"
-            BlueprintName = "TestingTesting"
-            ReferencedContainer = "container:TestingTesting.xcodeproj">
+            BuildableName = "MarbleRunExtreme"
+            BlueprintName = "MarbleRunExtreme"
+            ReferencedContainer = "container:MarbleRunExtreme.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

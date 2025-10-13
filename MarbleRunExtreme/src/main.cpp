@@ -8,19 +8,8 @@
 #include "marble.h"
 #include "shader_utils.h"
 
-#include <filesystem>
-
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
-namespace fs = std::filesystem;
-
-std::string getShaderPath(const std::string& fileName) {
-    fs::path exePath = fs::current_path(); // or use argv[0] for more control
-    fs::path shaderPath = exePath / "shaders" / fileName;
-    std::cout << "Looking for shader at: " << shaderPath << std::endl;
-    return shaderPath.string();
-}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -47,7 +36,7 @@ int main() {
         return -1;
     }
     
-    GLuint marbleProgram = createShaderProgram(getShaderPath("marble.vert"), getShaderPath("marble.frag"));
+    GLuint marbleProgram = createShaderProgram("shaders/marble.vert", "shaders/marble.frag");
 
     glEnable(GL_DEPTH_TEST);
 

@@ -29,7 +29,7 @@
 /* Begin PBXFileReference section */
 		113094952E4B2EED000ABCD1 /* libGLEW.2.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.2.0.dylib; path = ../../../../../../opt/homebrew/Cellar/glew/2.2.0_1/lib/libGLEW.2.2.0.dylib; sourceTree = "<group>"; };
 		113094972E4B2EFE000ABCD1 /* libglfw.3.4.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.4.dylib; path = ../../../../../../opt/homebrew/Cellar/glfw/3.4/lib/libglfw.3.4.dylib; sourceTree = "<group>"; };
-		1134DB862E49E6CC000EB0D0 /* TestingTesting */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TestingTesting; sourceTree = BUILT_PRODUCTS_DIR; };
+		1134DB862E49E6CC000EB0D0 /* MarbleRunExtreme */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MarbleRunExtreme; sourceTree = BUILT_PRODUCTS_DIR; };
 		1134DB912E49E877000EB0D0 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		1134DB932E49E88A000EB0D0 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -69,7 +69,7 @@
 		1134DB872E49E6CC000EB0D0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1134DB862E49E6CC000EB0D0 /* TestingTesting */,
+				1134DB862E49E6CC000EB0D0 /* MarbleRunExtreme */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,9 +88,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1134DB852E49E6CC000EB0D0 /* TestingTesting */ = {
+		1134DB852E49E6CC000EB0D0 /* MarbleRunExtreme */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1134DB8D2E49E6CC000EB0D0 /* Build configuration list for PBXNativeTarget "TestingTesting" */;
+			buildConfigurationList = 1134DB8D2E49E6CC000EB0D0 /* Build configuration list for PBXNativeTarget "MarbleRunExtreme" */;
 			buildPhases = (
 				1134DB822E49E6CC000EB0D0 /* Sources */,
 				1134DB832E49E6CC000EB0D0 /* Frameworks */,
@@ -103,11 +103,11 @@
 			fileSystemSynchronizedGroups = (
 				1134DB882E49E6CC000EB0D0 /* MarbleRunExtreme */,
 			);
-			name = TestingTesting;
+			name = MarbleRunExtreme;
 			packageProductDependencies = (
 			);
 			productName = TestingTesting;
-			productReference = 1134DB862E49E6CC000EB0D0 /* TestingTesting */;
+			productReference = 1134DB862E49E6CC000EB0D0 /* MarbleRunExtreme */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -124,7 +124,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1134DB812E49E6CC000EB0D0 /* Build configuration list for PBXProject "TestingTesting" */;
+			buildConfigurationList = 1134DB812E49E6CC000EB0D0 /* Build configuration list for PBXProject "MarbleRunExtreme" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -138,7 +138,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1134DB852E49E6CC000EB0D0 /* TestingTesting */,
+				1134DB852E49E6CC000EB0D0 /* MarbleRunExtreme */,
 			);
 		};
 /* End PBXProject section */
@@ -328,7 +328,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1134DB812E49E6CC000EB0D0 /* Build configuration list for PBXProject "TestingTesting" */ = {
+		1134DB812E49E6CC000EB0D0 /* Build configuration list for PBXProject "MarbleRunExtreme" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1134DB8B2E49E6CC000EB0D0 /* Debug */,
@@ -337,7 +337,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1134DB8D2E49E6CC000EB0D0 /* Build configuration list for PBXNativeTarget "TestingTesting" */ = {
+		1134DB8D2E49E6CC000EB0D0 /* Build configuration list for PBXNativeTarget "MarbleRunExtreme" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1134DB8E2E49E6CC000EB0D0 /* Debug */,
