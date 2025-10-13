@@ -1,0 +1,66 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on network volumes
+.Spotlight-V100
+.Trashes
+
+# Xcode
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.xcworkspace
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+
+# Xcode Index
+*.xccheckout
+*.xcscmblueprint
+
+# C++ / C makefiles / temporary files
+*.o
+*.obj
+*.so
+*.a
+*.dylib
+*.exe
+*.out
+*.app
+*.log
+
+# GLEW / OpenGL generated files (if any)
+glewinfo.txt
+*.ilk
+*.pdb
+
+# Compiled libraries (if you download precompiled ones, otherwise track your own)
+*.lib
+*.dll
+
+# Backup and temp files
+*~
+*.swp
+*.swo
+*.tmp
+
+# CMake (if you use it)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
+
+# Other
+.idea/
+*.iml

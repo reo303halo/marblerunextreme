@@ -16,6 +16,8 @@ void processInput(GLFWwindow* window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int winWidth = SCR_WIDTH;
+int winHeight = SCR_HEIGHT;
 
 // Camera translation
 float camX = 0.0f, camY = 0.0f, camZ = -3.0f; // Start away from origin
@@ -251,7 +253,7 @@ int run() {
 
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(camX, camY, camZ));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+            (float)winWidth / (float)winHeight, 0.1f, 100.0f);
 
         // ---- Pyramid ----
         glUseProgram(pyramidProgram);
@@ -314,5 +316,7 @@ void processInput(GLFWwindow* window)
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+    winWidth = width;
+    winHeight = height;
 }
 }
