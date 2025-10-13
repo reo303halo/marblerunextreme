@@ -1,14 +1,7 @@
-//
-//  main.cpp
-//  Marbe Run Extreme
-//
-//  Created by Roy Espen Olsen on 10/13/25.
-//
+#include "marble_run.h"
 
-#include <iostream>
 
-int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
-    return EXIT_SUCCESS;
+int main() {
+    marble_run::run();
 }
+
