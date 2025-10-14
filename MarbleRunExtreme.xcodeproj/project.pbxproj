@@ -121,6 +121,7 @@
 				TargetAttributes = {
 					1134DB852E49E6CC000EB0D0 = {
 						CreatedOnToolsVersion = 16.3;
+						LastSwiftMigration = 2600;
 					};
 				};
 			};
@@ -278,6 +279,7 @@
 		1134DB8E2E49E6CC000EB0D0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 229RNRZ782;
@@ -297,12 +299,15 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
 		1134DB8F2E49E6CC000EB0D0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 229RNRZ782;
@@ -322,6 +327,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
