@@ -8,12 +8,20 @@
 #include "marble.h"
 #include "shader_utils.h"
 #include "skybox.h"
+#include "camera.h"
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int winWidth = SCR_WIDTH, winHeight = SCR_HEIGHT;
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    winWidth = width;
+    winHeight = height;
 }
 
 int main() {
@@ -30,6 +38,9 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetWindowUserPointer(window, &camera);
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     if (glewInit() != GLEW_OK) {
@@ -37,41 +48,36 @@ int main() {
         return -1;
     }
 
-    // ----------------------------------------------------
     // Load shaders
-    // ----------------------------------------------------
     GLuint skyboxProgram = createShaderProgram("shaders/skybox.vert", "shaders/skybox.frag");
     GLuint marbleProgram = createShaderProgram("shaders/marble.vert", "shaders/marble.frag");
 
-    // ----------------------------------------------------
-    // Create Skybox (using a single cross-image atlas)
-    // ----------------------------------------------------
-    Skybox skybox("assets/skybox/canyon1.jpg");
-
-    // ----------------------------------------------------
-    // Setup Marble
-    // ----------------------------------------------------
+    // Create skybox & marble
+    Skybox skybox("assets/skybox/canyon.jpg");
     glEnable(GL_DEPTH_TEST);
     Marble marble(glm::vec3(0.0f, 0.0f, 0.0f),
                   glm::vec3(0.2f, 0.7f, 1.0f),
                   0.5f);
 
-    // ----------------------------------------------------
     // Render Loop
-    // ----------------------------------------------------
     while (!glfwWindowShouldClose(window)) {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        processInput(window, camera, deltaTime);
+
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 view = glm::translate(glm::mat4(1.0f),
-                                        glm::vec3(0.0f, 0.0f, -3.0f));
+        glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+            (float)winWidth / (float)winHeight, 0.1f, 100.0f);
 
-        // Draw objects in the world
+        // Draw marble
         marble.draw(marbleProgram, view, projection);
 
-        // Draw the skybox around everything
+        // Draw skybox
         skybox.draw(view, projection, skyboxProgram);
 
         glfwSwapBuffers(window);
