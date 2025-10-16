@@ -18,6 +18,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+const std::string SKYBOX_IMAGE = "assets/skybox/red_sky.png";
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     winWidth = width;
@@ -47,13 +49,16 @@ int main() {
         std::cerr << "Failed to initialize GLEW\n";
         return -1;
     }
+    
+    // Lights
+    glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
 
     // Load shaders
     GLuint skyboxProgram = createShaderProgram("shaders/skybox.vert", "shaders/skybox.frag");
     GLuint marbleProgram = createShaderProgram("shaders/marble.vert", "shaders/marble.frag");
 
     // Create skybox & marble
-    Skybox skybox("assets/skybox/canyon.jpg");
+    Skybox skybox(SKYBOX_IMAGE);
     glEnable(GL_DEPTH_TEST);
     Marble marble(glm::vec3(0.0f, 0.0f, 0.0f),
                   glm::vec3(0.2f, 0.7f, 1.0f),
@@ -73,6 +78,15 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f),
             (float)winWidth / (float)winHeight, 0.1f, 100.0f);
+        
+        // Lights
+        float lightSpeed = 0.2f;
+        lightPos.x = 2.0f * sin(glfwGetTime() * lightSpeed);
+        lightPos.z = 2.0f * cos(glfwGetTime() * lightSpeed);
+        
+        glUseProgram(marbleProgram);
+        glUniform3fv(glGetUniformLocation(marbleProgram, "lightPos"), 1, glm::value_ptr(lightPos));
+        glUniform3fv(glGetUniformLocation(marbleProgram, "viewPos"), 1, glm::value_ptr(camera.Position));
 
         // Draw marble
         marble.draw(marbleProgram, view, projection);
