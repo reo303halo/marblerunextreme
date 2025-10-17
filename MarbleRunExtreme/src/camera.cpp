@@ -3,66 +3,64 @@
 #include <cmath>
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : Position(position), WorldUp(up), Yaw(yaw), Pitch(pitch),
-      Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-      MovementSpeed(2.5f), MouseSensitivity(0.1f)
+    : position(position), worldUp(up), yaw(yaw), pitch(pitch),
+      front(glm::vec3(0.0f, 0.0f, -1.0f)),
+      movementSpeed(2.5f), mouseSensitivity(0.1f)
 {
     updateCameraVectors();
 }
 
 glm::mat4 Camera::getViewMatrix() const {
-    return glm::lookAt(Position, Position + Front, Up);
+    return glm::lookAt(position, position + front, up);
 }
 
 void Camera::processKeyboard(int key, float deltaTime) {
-    float velocity = MovementSpeed * deltaTime;
-    if (key == GLFW_KEY_W) Position += Front * velocity;
-    if (key == GLFW_KEY_S) Position -= Front * velocity;
-    if (key == GLFW_KEY_A) Position -= Right * velocity;
-    if (key == GLFW_KEY_D) Position += Right * velocity;
-    if (key == GLFW_KEY_Q) Position += Up * velocity;
-    if (key == GLFW_KEY_E) Position -= Up * velocity;
+    float velocity = movementSpeed * deltaTime;
+    if (key == GLFW_KEY_W) position += front * velocity;
+    if (key == GLFW_KEY_S) position -= front * velocity;
+    if (key == GLFW_KEY_A) position -= right * velocity;
+    if (key == GLFW_KEY_D) position += right * velocity;
+    if (key == GLFW_KEY_Q) position += up * velocity;
+    if (key == GLFW_KEY_E) position -= up * velocity;
 }
 
 void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch) {
-    xoffset *= MouseSensitivity;
-    yoffset *= MouseSensitivity;
+    xoffset *= mouseSensitivity;
+    yoffset *= mouseSensitivity;
 
-    Yaw   += xoffset;
-    Pitch += yoffset;
+    yaw   += xoffset;
+    pitch += yoffset;
 
     if (constrainPitch) {
-        if (Pitch > 89.0f) Pitch = 89.0f;
-        if (Pitch < -89.0f) Pitch = -89.0f;
+        if (pitch > 89.0f) pitch = 89.0f;
+        if (pitch < -89.0f) pitch = -89.0f;
     }
 
     updateCameraVectors();
 }
 
 void Camera::updateCameraVectors() {
-    glm::vec3 front;
-    front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.y = sin(glm::radians(Pitch));
-    front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    Front = glm::normalize(front);
-    Right = glm::normalize(glm::cross(Front, WorldUp));
-    Up    = glm::normalize(glm::cross(Right, Front));
+    glm::vec3 worldFront;
+    worldFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    worldFront.y = sin(glm::radians(pitch));
+    worldFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front = glm::normalize(worldFront);
+    right = glm::normalize(glm::cross(front, worldUp));
+    up    = glm::normalize(glm::cross(right, front));
 }
 
 void Camera::reset(glm::vec3 newPos) {
-    Position = newPos;
-    Yaw = -90.0f;
-    Pitch = 0.0f;
+    position = newPos;
+    yaw = -90.0f;
+    pitch = 0.0f;
     updateCameraVectors();
 }
 
-// ===== INPUT HANDLING =====
-
+// Input Handling
 static bool cursorVisible = false;
 static bool spacePressedLastFrame = false;
 
 void processInput(GLFWwindow* window, Camera& camera, float deltaTime) {
-    // Movement keys
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(GLFW_KEY_W, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(GLFW_KEY_S, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(GLFW_KEY_A, deltaTime);
@@ -83,8 +81,7 @@ void processInput(GLFWwindow* window, Camera& camera, float deltaTime) {
     spacePressedLastFrame = spacePressedThisFrame;
 }
 
-// ===== MOUSE CALLBACK =====
-
+// Mouse Callback
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     static float lastX = 400.0f;
     static float lastY = 300.0f;

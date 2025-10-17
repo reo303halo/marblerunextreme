@@ -1,7 +1,7 @@
 #include "shader_utils.h"
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include <filesystem>
 
 std::string loadShaderSource(const std::string& filePath)
