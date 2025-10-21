@@ -18,6 +18,7 @@
 #include "camera.h"
 
 // Physics
+#include "physics.h"
 #include <bullet/btBulletDynamicsCommon.h>
 
 const unsigned int SCR_WIDTH = 800;
@@ -72,47 +73,15 @@ int main() {
     Marble marble(glm::vec3(0.0f, 0.0f, 0.0f),
                   glm::vec3(0.2f, 0.7f, 1.0f),
                   0.5f);
+    Marble marble2(glm::vec3(0.0f, 10.0f, 0.0f),
+                   glm::vec3(1.0f, 0.2f, 0.2f),
+                   0.5f);
 
     // ---------------- Bullet Physics Setup ----------------
-    btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-    btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-    btDbvtBroadphase* overlappingPairCache = new btDbvtBroadphase();
-    btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-    btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-
-    dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
-
-    // Ground plane
-    btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 0);
-    btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
-    btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
-    btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-    dynamicsWorld->addRigidBody(groundRigidBody);
-
-    // Marble sphere
-    btCollisionShape* sphereShape = new btSphereShape(0.5f);
-    btDefaultMotionState* sphereMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 5, 0)));
-    btScalar mass = 1;
-    btVector3 sphereInertia(0, 0, 0);
-    sphereShape->calculateLocalInertia(mass, sphereInertia);
-    btRigidBody::btRigidBodyConstructionInfo sphereRigidBodyCI(mass, sphereMotionState, sphereShape, sphereInertia);
-    btRigidBody* sphereRigidBody = new btRigidBody(sphereRigidBodyCI);
-    dynamicsWorld->addRigidBody(sphereRigidBody);
-    
-    // Second marble
-    btCollisionShape* sphereShape2 = new btSphereShape(0.5f);
-    btDefaultMotionState* sphereMotionState2 = new btDefaultMotionState(
-        btTransform(btQuaternion(0, 0, 0, 1), btVector3(0.1, 10, 0.1))
-    );
-    btScalar mass2 = 1;
-    btVector3 sphereInertia2(0, 0, 0);
-    sphereShape2->calculateLocalInertia(mass2, sphereInertia2);
-    btRigidBody::btRigidBodyConstructionInfo sphereRigidBodyCI2(mass2, sphereMotionState2, sphereShape2, sphereInertia2);
-    btRigidBody* sphereRigidBody2 = new btRigidBody(sphereRigidBodyCI2);
-    dynamicsWorld->addRigidBody(sphereRigidBody2);
-
-    // Second marble for rendering
-    Marble marble2(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(1.0f, 0.2f, 0.2f), 0.5f);
+    PhysicsWorld physics;
+    physics.addGround();
+    btRigidBody* sphereBody1 = physics.addSphere(0.5f, glm::vec3(0, 5, 0));
+    btRigidBody* sphereBody2 = physics.addSphere(0.5f, glm::vec3(0.1, 10, 0.1));
 
 
     // ---------------- Light ----------------
@@ -126,20 +95,12 @@ int main() {
 
         processInput(window, camera, deltaTime);
 
-        // Step physics simulation
-        dynamicsWorld->stepSimulation(deltaTime, 10);
+        // Step physics
+        physics.step(deltaTime);
 
-        // First marble
-        btTransform trans;
-        sphereRigidBody->getMotionState()->getWorldTransform(trans);
-        btVector3 pos = trans.getOrigin();
-        marble.position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
-
-        // Second marble
-        btTransform trans2;
-        sphereRigidBody2->getMotionState()->getWorldTransform(trans2);
-        btVector3 pos2 = trans2.getOrigin();
-        marble2.position = glm::vec3(pos2.getX(), pos2.getY(), pos2.getZ());
+        // Update marbles from Bullet
+        marble.position = physics.getObjectPosition(sphereBody1);
+        marble2.position = physics.getObjectPosition(sphereBody2);
         
         // Camera follows marble2
         //camera.position = glm::vec3(marble2.position.x, marble2.position.y + 2.0f, marble2.position.z + 8.0f);
@@ -169,25 +130,6 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // ---------------- Clean up Bullet ----------------
-    delete sphereRigidBody->getMotionState();
-    delete sphereRigidBody;
-    delete sphereShape;
-    
-    delete sphereRigidBody2->getMotionState();
-    delete sphereRigidBody2;
-    delete sphereShape2;
-    
-    delete groundRigidBody->getMotionState();
-    delete groundRigidBody;
-    
-    delete groundShape;
-    delete dynamicsWorld;
-    delete solver;
-    delete overlappingPairCache;
-    delete dispatcher;
-    delete collisionConfiguration;
 
     glfwTerminate();
     return 0;
