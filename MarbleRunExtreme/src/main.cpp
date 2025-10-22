@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <random>
 
 // OpenGL / GLM
 #include <GL/glew.h>
@@ -16,9 +17,10 @@
 #include "shader_utils.h"
 #include "skybox.h"
 #include "camera.h"
-
-// Physics
 #include "physics.h"
+#include "marble_entity.h"
+
+// Bullet
 #include <bullet/btBulletDynamicsCommon.h>
 
 const unsigned int SCR_WIDTH = 800;
@@ -70,19 +72,40 @@ int main() {
 
     // ---------------- Scene Objects ----------------
     Skybox skybox(SKYBOX_IMAGE);
-    Marble marble(glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3(0.2f, 0.7f, 1.0f),
-                  0.5f);
-    Marble marble2(glm::vec3(0.0f, 10.0f, 0.0f),
-                   glm::vec3(1.0f, 0.2f, 0.2f),
-                   0.5f);
 
-    // ---------------- Bullet Physics Setup ----------------
+    // ---------------- Bullet Physics ----------------
     PhysicsWorld physics;
     physics.addGround();
-    btRigidBody* sphereBody1 = physics.addSphere(0.5f, glm::vec3(0, 5, 0));
-    btRigidBody* sphereBody2 = physics.addSphere(0.5f, glm::vec3(0.1, 10, 0.1));
 
+    // ---------------- Random Marble Setup ----------------
+    std::vector<MarbleEntity> marbles;
+    MarbleEntity* playerMarble = nullptr;
+
+    // Random engine setup
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Define space and property ranges
+    std::uniform_real_distribution<float> posDist(-5.0f, 5.0f); // x,z range
+    std::uniform_real_distribution<float> heightDist(5.0f, 30.0f); // y range
+    std::uniform_real_distribution<float> colorDist(0.2f, 1.0f);
+    std::uniform_real_distribution<float> radiusDist(0.3f, 0.7f);
+    std::uniform_real_distribution<float> massDist(0.5f, 4.0f);
+
+    const int NUM_MARBLES = 50;
+
+    // First marble = player
+    marbles.emplace_back(glm::vec3(0, 5, 0), glm::vec3(0.2f, 0.7f, 1.0f), 0.5f, 1.0f, physics);
+    playerMarble = &marbles.back();
+
+    // Generate random marbles
+    for (int i = 0; i < NUM_MARBLES - 1; ++i) {
+        glm::vec3 pos(posDist(gen), heightDist(gen), posDist(gen));
+        glm::vec3 color(colorDist(gen), colorDist(gen), colorDist(gen));
+        float radius = radiusDist(gen);
+        float mass = massDist(gen);
+        marbles.emplace_back(pos, color, radius, mass, physics);
+    }
 
     // ---------------- Light ----------------
     glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
@@ -98,12 +121,9 @@ int main() {
         // Step physics
         physics.step(deltaTime);
 
-        // Update marbles from Bullet
-        marble.position = physics.getObjectPosition(sphereBody1);
-        marble2.position = physics.getObjectPosition(sphereBody2);
-        
-        // Camera follows marble2
-        //camera.position = glm::vec3(marble2.position.x, marble2.position.y + 2.0f, marble2.position.z + 8.0f);
+        // Update all marbles
+        for (auto& m : marbles)
+            m.updateFromPhysics(physics);
 
         // Clear screen
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
@@ -122,9 +142,11 @@ int main() {
         glUniform3fv(glGetUniformLocation(marbleProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(marbleProgram, "viewPos"), 1, glm::value_ptr(camera.position));
 
-        // Draw marble and skybox
-        marble.draw(marbleProgram, view, projection);
-        marble2.draw(marbleProgram, view, projection);
+        // Draw all marbles
+        for (auto& m : marbles)
+            m.renderable.draw(marbleProgram, view, projection);
+
+        // Draw skybox
         skybox.draw(view, projection, skyboxProgram);
 
         glfwSwapBuffers(window);
