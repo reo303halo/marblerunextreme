@@ -19,6 +19,7 @@
 #include "camera.h"
 #include "physics.h"
 #include "marble_entity.h"
+#include "box_entity.h"
 
 // Bullet
 #include <bullet/btBulletDynamicsCommon.h>
@@ -69,13 +70,33 @@ int main() {
     // ---------------- Shaders ----------------
     GLuint skyboxProgram = createShaderProgram("shaders/skybox.vert", "shaders/skybox.frag");
     GLuint marbleProgram = createShaderProgram("shaders/marble.vert", "shaders/marble.frag");
+    GLuint boxProgram = createShaderProgram("shaders/box.vert", "shaders/box.frag");
 
     // ---------------- Scene Objects ----------------
     Skybox skybox(SKYBOX_IMAGE);
 
     // ---------------- Bullet Physics ----------------
     PhysicsWorld physics;
-    physics.addGround();
+    // physics.addGround();
+    
+    // ---------------- Track Setup ----------------
+    std::vector<BoxEntity> trackBoxes;
+
+    // Big catching platform (should be start eventually)
+    btRigidBody* bigPlatform = physics.addBox(
+        glm::vec3(6.0f, 0.5f, 6.0f),   // half extents: 12x1x12 total
+        glm::vec3(0.0f, 1.0f, 0.0f),   // position slightly above ground
+        glm::vec3(glm::radians(15.0f), 0, 0) // tilt toward the next platform
+    );
+    trackBoxes.emplace_back(bigPlatform, glm::vec3(6.0f, 0.5f, 6.0f));
+
+    // Next platforms
+    btRigidBody* box1 = physics.addBox(
+        glm::vec3(3.0f, 0.2f, 10.0f),
+        glm::vec3(0.0f, -4.0f, 12.0f),
+        glm::vec3(glm::radians(25.0f), 0, 0)
+    );
+    trackBoxes.emplace_back(box1, glm::vec3(3.0f, 0.2f, 10.0f));
 
     // ---------------- Random Marble Setup ----------------
     std::vector<MarbleEntity> marbles;
@@ -145,6 +166,10 @@ int main() {
         // Draw all marbles
         for (auto& m : marbles)
             m.renderable.draw(marbleProgram, view, projection);
+        
+        glUseProgram(boxProgram); // reuse shader
+        for (auto& box : trackBoxes)
+            box.draw(boxProgram, view, projection);
 
         // Draw skybox
         skybox.draw(view, projection, skyboxProgram);

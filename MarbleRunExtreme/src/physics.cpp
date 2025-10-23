@@ -66,9 +66,56 @@ btRigidBody* PhysicsWorld::addSphere(float radius, const glm::vec3& startPos, fl
     return body;
 }
 
+btRigidBody* PhysicsWorld::addInclinedPlane(const glm::vec3& normal, float constant,
+                                            const glm::vec3& position, const glm::vec3& rotation) {
+    // Create plane
+    btCollisionShape* planeShape = new btStaticPlaneShape(btVector3(normal.x, normal.y, normal.z), constant);
+    collisionShapes.push_back(planeShape);
+
+    // Create transform
+    btQuaternion quat;
+    quat.setEuler(rotation.y, rotation.x, rotation.z); // yaw, pitch, roll
+    btTransform transform(quat, btVector3(position.x, position.y, position.z));
+
+    btDefaultMotionState* motionState = new btDefaultMotionState(transform);
+    btRigidBody::btRigidBodyConstructionInfo planeCI(0.0f, motionState, planeShape);
+    btRigidBody* body = new btRigidBody(planeCI);
+
+    dynamicsWorld->addRigidBody(body);
+    return body;
+}
+
+btRigidBody* PhysicsWorld::addBox(const glm::vec3& halfExtents, const glm::vec3& position,
+                                  const glm::vec3& rotation, bool isStatic) {
+    btCollisionShape* boxShape = new btBoxShape(btVector3(halfExtents.x, halfExtents.y, halfExtents.z));
+    collisionShapes.push_back(boxShape);
+
+    btQuaternion quat;
+    quat.setEuler(rotation.y, rotation.x, rotation.z); // yaw, pitch, roll
+    btTransform transform(quat, btVector3(position.x, position.y, position.z));
+
+    btDefaultMotionState* motionState = new btDefaultMotionState(transform);
+
+    float mass = isStatic ? 0.0f : 1.0f;
+    btVector3 inertia(0, 0, 0);
+    if (mass > 0.0f)
+        boxShape->calculateLocalInertia(mass, inertia);
+
+    btRigidBody::btRigidBodyConstructionInfo boxCI(mass, motionState, boxShape, inertia);
+    btRigidBody* body = new btRigidBody(boxCI);
+    dynamicsWorld->addRigidBody(body);
+
+    return body;
+}
+
 glm::vec3 PhysicsWorld::getObjectPosition(btRigidBody* body) const {
     btTransform trans;
     body->getMotionState()->getWorldTransform(trans);
     btVector3 pos = trans.getOrigin();
     return glm::vec3(pos.getX(), pos.getY(), pos.getZ());
 }
+
+void PhysicsWorld::addRigidBody(btRigidBody* body) {
+    dynamicsWorld->addRigidBody(body);
+}
+
