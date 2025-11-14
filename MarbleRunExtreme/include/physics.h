@@ -15,6 +15,10 @@ public:
     btRigidBody* addBox(const glm::vec3& halfExtents, const glm::vec3& position, const glm::vec3& rotation, bool isStatic = true);
     glm::vec3 getObjectPosition(btRigidBody* body) const;
     void addRigidBody(btRigidBody* body);
+    btRigidBody* addTriangleMesh(const std::vector<glm::vec3>& vertices,
+                                 const std::vector<unsigned int>& indices,
+                                 const glm::vec3& position,
+                                 const glm::vec3& rotation);
     
 private:
     btDefaultCollisionConfiguration* collisionConfiguration;

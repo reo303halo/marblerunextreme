@@ -119,3 +119,34 @@ void PhysicsWorld::addRigidBody(btRigidBody* body) {
     dynamicsWorld->addRigidBody(body);
 }
 
+btRigidBody* PhysicsWorld::addTriangleMesh(const std::vector<glm::vec3>& vertices,
+                                           const std::vector<unsigned int>& indices,
+                                           const glm::vec3& position,
+                                           const glm::vec3& rotation)
+{
+    auto* triMesh = new btTriangleMesh();
+
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        const glm::vec3& a = vertices[indices[i]];
+        const glm::vec3& b = vertices[indices[i + 1]];
+        const glm::vec3& c = vertices[indices[i + 2]];
+        triMesh->addTriangle(btVector3(a.x, a.y, a.z),
+                             btVector3(b.x, b.y, b.z),
+                             btVector3(c.x, c.y, c.z));
+    }
+
+    btCollisionShape* shape = new btBvhTriangleMeshShape(triMesh, true);
+    collisionShapes.push_back(shape); // now valid
+
+    btQuaternion quat;
+    quat.setEuler(rotation.y, rotation.x, rotation.z);
+    btTransform transform(quat, btVector3(position.x, position.y, position.z));
+
+    auto* motion = new btDefaultMotionState(transform);
+    btRigidBody::btRigidBodyConstructionInfo ci(0.0f, motion, shape);
+    auto* body = new btRigidBody(ci);
+    dynamicsWorld->addRigidBody(body);
+
+    return body;
+}
+
