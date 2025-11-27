@@ -20,6 +20,7 @@
 #include "physics.h"
 #include "marble_entity.h"
 #include "box_entity.h"
+#include "track.h"
 #include "track_utils.h"
 
 // Bullet
@@ -78,12 +79,14 @@ int main() {
 
     // ---------------- Bullet Physics ----------------
     PhysicsWorld physics;
-    //physics.addGround();
+    //physics.addGround(); // Used for testing
     
-    // ---------------- Track Setup ----------------
-    std::vector<MeshEntity> meshTrack = buildCurvedMeshTrack(physics);
-
-    // ---------------- Random Marble Setup ----------------
+    
+    // ---------------- Track and Marble Setup ----------------
+    
+    Track track;
+    track.addSegment(buildCurvedSegment(physics, 180.0f, 30.0f, 5.0f, 3.0f, 15.0f));
+    
     std::vector<MarbleEntity> marbles;
     MarbleEntity* playerMarble = nullptr;
 
@@ -100,7 +103,7 @@ int main() {
     std::uniform_real_distribution<float> offsetXZ(-2.0f, 2.0f);
     std::uniform_real_distribution<float> offsetY(-1.0f, 1.0f);
 
-    const int NUM_MARBLES = 50;
+    const int NUM_MARBLES = 5;
 
     // Player marble spawn
     glm::vec3 spawnCenter(31.0f, 26.0f, 1.0f);
@@ -122,6 +125,21 @@ int main() {
 
         marbles.emplace_back(pos, color, radius, mass, physics);
     }
+    
+    // Move entire track so entry is at the marble spawn point
+    float trackXOffset = 0.0f;
+    float trackYOffset = -17.0f;
+    float trackZOffset = -2.0f;
+    
+    glm::vec3 trackStartPos = spawnCenter + glm::vec3(trackXOffset, trackYOffset, trackZOffset);
+
+    track.segments[0].setWorldTransform(
+        glm::translate(glm::mat4(1.0f), trackStartPos)
+    );
+    
+    track.addSegment(buildCurvedSegment(physics, 360.0f, 30.0f, 5.0f, 3.0f, 15.0f));
+    track.addSegment(buildCurvedSegment(physics,  100.0f, 30.0f));
+    track.addSegment(buildCurvedSegment(physics, -100.0f, -30.0f));
 
     // ---------------- Light ----------------
     glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
@@ -161,15 +179,19 @@ int main() {
         glUseProgram(trackProgram);
         glUniform3fv(glGetUniformLocation(trackProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(trackProgram, "viewPos"), 1, glm::value_ptr(camera.position));
-        glUniform3fv(glGetUniformLocation(trackProgram, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.2f))); // orange
+        glUniform3fv(glGetUniformLocation(trackProgram, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.2f)));
 
         // Draw all marbles
         for (auto& m : marbles)
             m.renderable.draw(marbleProgram, view, projection);
         
         glUseProgram(trackProgram);
-        for (auto& seg : meshTrack)
-            seg.draw(trackProgram, view, projection);
+        //for (auto& seg : meshTrack)
+        //    seg.draw(trackProgram, view, projection);
+        
+        for (auto& seg : track.segments)
+            seg.mesh.draw(trackProgram, seg.worldTransform, view, projection);
+
 
         // Draw skybox
         skybox.draw(view, projection, skyboxProgram);
@@ -182,6 +204,3 @@ int main() {
     return 0;
 }
 
-
-
-// https://www.youtube.com/watch?v=keA92Gse2v8
