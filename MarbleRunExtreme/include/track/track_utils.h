@@ -4,14 +4,15 @@
 #include "mesh_entity.h"
 #include "physics.h"
 #include "track_segment.h"
+#include "obstacle_utils.h"
 
 inline TrackSegment buildCurvedSegment(
     PhysicsWorld& physics,
     float arcDeg,
+    float drop   = 10.0f,
     float radius = 30.0f,
     float width  = 5.0f,
     float depth  = 3.0f,
-    float drop   = 10.0f,
     int segU = 240,
     int segV = 60
                                        ) {
@@ -114,29 +115,93 @@ inline TrackSegment buildCurvedSegment(
     return seg;
 }
 
-inline TrackSegment buildStraightSegment(PhysicsWorld& physics, float length, float width=5.0f, float depth=2.0f) {
+
+inline TrackSegment buildStraightSegment(
+    PhysicsWorld& physics,
+    float length,
+    float pitchDeg,
+    float heightOffset = 0.0f,
+    float width = 5.0f,
+    float depth = 2.0f
+) {
     TrackSegment seg;
-    
-    // vertices local
-    std::vector<glm::vec3> verts = {
-        {-width, -depth, 0}, { width, -depth, 0},
-        {-width, -depth, length}, { width, -depth, length}
-    };
-    std::vector<glm::vec3> norms = {
-        {0,1,0},{0,1,0},{0,1,0},{0,1,0}
-    };
-    std::vector<unsigned int> idx = {0,2,1,1,2,3};
-    
+
+    float pitchRad = glm::radians(pitchDeg);
+
+    glm::vec3 forward(0, sin(pitchRad), cos(pitchRad));
+    forward = glm::normalize(forward);
+
+    glm::vec3 up(0, cos(pitchRad), -sin(pitchRad));
+    up = glm::normalize(up);
+
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0,1,0)));
+
+    // Shift all vertices by heightOffset
+    glm::vec3 downShift = glm::vec3(0, -heightOffset, 0);
+
+    glm::vec3 p0 = (-right * width) + (-up * depth) + downShift;
+    glm::vec3 p1 = ( right * width) + (-up * depth) + downShift;
+    glm::vec3 p2 = p0 + forward * length;
+    glm::vec3 p3 = p1 + forward * length;
+
+    std::vector<glm::vec3> verts = { p0, p1, p2, p3 };
+    std::vector<glm::vec3> norms = { up, up, up, up };
+    std::vector<unsigned int> idx = { 0,2,1, 1,2,3 };
+
     RenderableMesh m;
-    m.load(verts,norms,idx);
+    m.load(verts, norms, idx);
     seg.mesh = m;
-    
+
     seg.body = physics.addTriangleMesh(verts, idx, glm::vec3(0), glm::vec3(0));
-    
-    seg.entryPos = glm::vec3(0,0,0);
-    seg.entryForward = glm::vec3(0,0,1);
-    seg.exitPos = glm::vec3(0,0,length);
-    seg.exitForward = glm::vec3(0,0,1);
-    
+
+    // Entry and exit positions
+    seg.entryPos = glm::vec3(0);
+    seg.entryForward = forward;
+    seg.exitPos = forward * length;
+    seg.exitForward = forward;
+    seg.exitUp = up;
+
     return seg;
 }
+
+
+inline std::vector<Obstacle> generateSlotMachineObstacles(
+    PhysicsWorld& physics,
+    const TrackSegment& segment,
+    float segmentLength,
+    float segmentWidth,
+    int count
+) {
+    std::vector<Obstacle> obstacles;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::uniform_real_distribution<float> distX(-segmentWidth + 2.0f, segmentWidth - 2.0f);
+    std::uniform_real_distribution<float> distZ(2.0f, segmentLength - 2.0f);
+    std::uniform_real_distribution<float> sizeDist(0.5f, 2.0f);
+
+    // Segment axes in world space
+    glm::vec3 segForward = glm::normalize(glm::vec3(segment.worldTransform * glm::vec4(segment.exitPos - segment.entryPos, 0.0f)));
+    glm::vec3 segUp      = glm::normalize(glm::vec3(segment.worldTransform * glm::vec4(segment.exitUp, 0.0f)));
+    glm::vec3 segRight   = glm::normalize(glm::cross(segForward, segUp));
+
+    glm::vec3 segOrigin = glm::vec3(segment.worldTransform * glm::vec4(segment.entryPos, 1.0f));
+
+    for (int i = 0; i < count; i++) {
+        float w = sizeDist(gen);
+        float h = sizeDist(gen) + 1.0f;
+        float d = sizeDist(gen);
+
+        float xLocal = distX(gen);
+        float zLocal = distZ(gen);
+
+        // Compute obstacle center so its base sits on the track surface
+        glm::vec3 worldPos = segOrigin + segRight * xLocal + segForward * zLocal + segUp * (h * 0.5f - 3.0f);
+
+        obstacles.push_back(buildObstacle(physics, worldPos, glm::vec3(w, h, d)));
+    }
+
+    return obstacles;
+}
+

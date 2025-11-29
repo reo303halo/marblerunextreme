@@ -26,8 +26,8 @@
 // Bullet
 #include <bullet/btBulletDynamicsCommon.h>
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 1000;
 int winWidth = SCR_WIDTH, winHeight = SCR_HEIGHT;
 
 Camera camera(glm::vec3(4.0f, 12.0f, 10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -85,7 +85,7 @@ int main() {
     // ---------------- Track and Marble Setup ----------------
     
     Track track;
-    track.addSegment(buildCurvedSegment(physics, 180.0f, 30.0f, 5.0f, 3.0f, 15.0f));
+    track.addSegment(buildCurvedSegment(physics, 180.0f, 15.0f));
     
     std::vector<MarbleEntity> marbles;
     MarbleEntity* playerMarble = nullptr;
@@ -103,7 +103,7 @@ int main() {
     std::uniform_real_distribution<float> offsetXZ(-2.0f, 2.0f);
     std::uniform_real_distribution<float> offsetY(-1.0f, 1.0f);
 
-    const int NUM_MARBLES = 5;
+    const int NUM_MARBLES = 25;
 
     // Player marble spawn
     glm::vec3 spawnCenter(31.0f, 26.0f, 1.0f);
@@ -134,13 +134,24 @@ int main() {
     glm::vec3 trackStartPos = spawnCenter + glm::vec3(trackXOffset, trackYOffset, trackZOffset);
 
     track.segments[0].setWorldTransform(
-        glm::translate(glm::mat4(1.0f), trackStartPos)
-    );
+        glm::translate(glm::mat4(1.0f), trackStartPos));
     
-    track.addSegment(buildCurvedSegment(physics, 360.0f, 30.0f, 5.0f, 3.0f, 15.0f));
-    track.addSegment(buildCurvedSegment(physics,  100.0f, 30.0f));
-    track.addSegment(buildCurvedSegment(physics, -100.0f, -30.0f));
+    track.addSegment(buildCurvedSegment(physics, 360.0f, 15.0f));
+    track.addSegment(buildCurvedSegment(physics,  100.0f));
+    track.addSegment(buildCurvedSegment(physics, -100.0f, 15.0f, -30.0f));
+    
+    
+    float straigthLength = 60.0f;
+    float straigthWidth = 15.0f;
+    
+    track.addSegment(buildStraightSegment(physics, straigthLength, -20.0f, 1.0f, straigthWidth));
 
+    // Access the last added segment
+    TrackSegment& straight = track.segments.back();
+    auto obstacles = generateSlotMachineObstacles(physics, straight, straigthLength, straigthWidth, 15);
+    track.addSegment(buildStraightSegment(physics, straigthLength - 20.0f, 20.0f, 2.0f, straigthWidth));
+
+    
     // ---------------- Light ----------------
     glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
 
@@ -159,41 +170,39 @@ int main() {
         for (auto& m : marbles)
             m.updateFromPhysics(physics);
 
-        // Clear screen
+        // ---------------- Clear screen ----------------
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (float)winWidth / (float)winHeight, 0.1f, 100.0f);
+            (float)winWidth / (float)winHeight, 0.1f, 500.0f);
 
-        // Update light
+        // ---------------- Update light ----------------
         float lightSpeed = 0.2f;
         lightPos.x = 2.0f * sin(glfwGetTime() * lightSpeed);
         lightPos.z = 2.0f * cos(glfwGetTime() * lightSpeed);
 
+        // ---------------- Render scene ----------------
         glUseProgram(marbleProgram);
         glUniform3fv(glGetUniformLocation(marbleProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(marbleProgram, "viewPos"), 1, glm::value_ptr(camera.position));
-        
+
         glUseProgram(trackProgram);
         glUniform3fv(glGetUniformLocation(trackProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(trackProgram, "viewPos"), 1, glm::value_ptr(camera.position));
         glUniform3fv(glGetUniformLocation(trackProgram, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.2f)));
 
-        // Draw all marbles
         for (auto& m : marbles)
             m.renderable.draw(marbleProgram, view, projection);
-        
+
         glUseProgram(trackProgram);
-        //for (auto& seg : meshTrack)
-        //    seg.draw(trackProgram, view, projection);
-        
         for (auto& seg : track.segments)
             seg.mesh.draw(trackProgram, seg.worldTransform, view, projection);
 
+        for (auto& o : obstacles)
+            o.box->draw(trackProgram, view, projection);
 
-        // Draw skybox
         skybox.draw(view, projection, skyboxProgram);
 
         glfwSwapBuffers(window);
