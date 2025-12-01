@@ -6,20 +6,19 @@
 
 class RenderableBox {
 public:
-    glm::vec3 size;    // half extents
+    glm::vec3 size;
     GLuint VAO, VBO;
 
     RenderableBox(const glm::vec3& halfExtents) : size(halfExtents) {
         float vertices[] = {
-            // positions for each triangle (36 vertices)
-            -1,-1,-1,  1,-1,-1,  1,1,-1,  1,1,-1, -1,1,-1, -1,-1,-1, // back
+            // Positions for each triangle (36 vertices)
+            -1,-1,-1,  1,-1,-1,  1,1,-1,  1,1,-1, -1,1,-1, -1,-1,-1,   // back
             -1,-1, 1,  1,-1, 1,  1,1, 1,  1,1, 1, -1,1, 1, -1,-1, 1,   // front
-            -1,1, 1, -1,1,-1, -1,-1,-1, -1,-1,-1, -1,-1,1, -1,1,1,      // left
+            -1,1, 1, -1,1,-1, -1,-1,-1, -1,-1,-1, -1,-1,1, -1,1,1,     // left
             1,1, 1, 1,1,-1, 1,-1,-1, 1,-1,-1, 1,-1,1, 1,1,1,           // right
             -1,1,-1, 1,1,-1, 1,1,1, 1,1,1, -1,1,1, -1,1,-1,            // top
-            -1,-1,-1, 1,-1,-1, 1,-1,1, 1,-1,1, -1,-1,1, -1,-1,-1      // bottom
+            -1,-1,-1, 1,-1,-1, 1,-1,1, 1,-1,1, -1,-1,1, -1,-1,-1       // bottom
         };
-
 
         // OpenGL buffer setup
         glGenVertexArrays(1, &VAO);

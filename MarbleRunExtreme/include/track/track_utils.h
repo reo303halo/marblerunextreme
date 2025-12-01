@@ -34,7 +34,6 @@ inline TrackSegment buildCurvedSegment(
         // Downward slope
         float y = -drop * t;
         
-        // Curve center
         glm::vec3 center(
                          radius * cos(angle) - radius,
                          y,
@@ -43,17 +42,13 @@ inline TrackSegment buildCurvedSegment(
         
         // Tangent / forward direction
         glm::vec3 forward(-sin(angle), 0.0f, cos(angle));
-        
-        // World up for generating local frame
         glm::vec3 up(0, 1, 0);
-        
-        // Local right vector
         glm::vec3 right = glm::normalize(glm::cross(forward, up));
         
         // Local basis for this slice (x=right, y=up, z=forward)
         glm::mat3 basis(right, up, forward);
         
-        lastBasis = basis; // <-- store the last orientation
+        lastBasis = basis;
         
         // --- Build cross-section ---
         for (int v = 0; v <= segV; ++v) {
@@ -84,32 +79,25 @@ inline TrackSegment buildCurvedSegment(
         }
     }
     
-    // --- Render + Physics ---
     RenderableMesh mesh;
     mesh.load(verts, norms, idx);
     seg.mesh = mesh;
     
     seg.body = physics.addTriangleMesh(verts, idx, glm::vec3(0), glm::vec3(0));
     
-    // ----------------------------
-    //   CONNECTIVITY INFORMATION
-    // ----------------------------
+    // Connection
     seg.entryPos = glm::vec3(0, 0, 0);
     seg.entryForward = glm::vec3(0, 0, 1);
     
-    // Exit position (curve endpoint + slope)
     float xExit = radius * (cos(arc) - 1.0f);
     float zExit = radius * sin(arc);
     float yExit = -drop;
     
     seg.exitPos = glm::vec3(xExit, yExit, zExit);
     
-    // Exit forward direction
     glm::vec3 exitForward(-sin(arc), 0.0f, cos(arc));
     seg.exitForward = glm::normalize(exitForward);
     
-    // EXIT UP — uses the *last* basis of the curved segment
-    // This is the critical fix!
     seg.exitUp = glm::normalize(lastBasis * glm::vec3(0,1,0));
     
     return seg;
@@ -135,8 +123,6 @@ inline TrackSegment buildStraightSegment(
     up = glm::normalize(up);
 
     glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0,1,0)));
-
-    // Shift all vertices by heightOffset
     glm::vec3 downShift = glm::vec3(0, -heightOffset, 0);
 
     glm::vec3 p0 = (-right * width) + (-up * depth) + downShift;
@@ -153,8 +139,6 @@ inline TrackSegment buildStraightSegment(
     seg.mesh = m;
 
     seg.body = physics.addTriangleMesh(verts, idx, glm::vec3(0), glm::vec3(0));
-
-    // Entry and exit positions
     seg.entryPos = glm::vec3(0);
     seg.entryForward = forward;
     seg.exitPos = forward * length;
@@ -203,5 +187,90 @@ inline std::vector<Obstacle> generateSlotMachineObstacles(
     }
 
     return obstacles;
+}
+
+inline TrackSegment buildFunnelSegment(
+    PhysicsWorld& physics,
+    float arcDeg,
+    float drop = 10.0f,
+    float radius = 30.0f,
+    float startWidth = 5.0f,
+    float depth = 3.0f,
+    float exitWidth = 2.5f,
+    int segU = 240,
+    int segV = 60
+) {
+    TrackSegment seg;
+
+    float arc = glm::radians(arcDeg);
+    std::vector<glm::vec3> verts;
+    std::vector<glm::vec3> norms;
+    std::vector<unsigned int> idx;
+    glm::mat3 lastBasis;
+
+    for (int u = 0; u <= segU; ++u) {
+        float t = float(u) / segU; // 0 -> 1 along the segment
+        float angle = arc * t;
+        float y = -drop * t;
+
+        glm::vec3 center(radius * cos(angle) - radius, y, radius * sin(angle));
+
+        glm::vec3 forward(-sin(angle), 0.0f, cos(angle));
+        glm::vec3 up(0, 1, 0);
+        glm::vec3 right = glm::normalize(glm::cross(forward, up));
+        glm::mat3 basis(right, up, forward);
+        lastBasis = basis;
+
+        for (int v = 0; v <= segV; ++v) {
+            float s = float(v) / segV;
+
+            // Linearly interpolate width from startWidth -> exitWidth
+            float startX = (s - 0.5f) * startWidth * 2.0f;
+            float endX   = (s - 0.5f) * exitWidth  * 2.0f;
+            float x = startX * (1.0f - t) + endX * t;
+
+            float yLocal = -depth * cos((s - 0.5f) * glm::pi<float>());
+            glm::vec3 local(x, yLocal, 0);
+            verts.push_back(center + basis * local);
+
+            glm::vec3 nLocal(0, 1, (x / startWidth) * 0.3f);
+            norms.push_back(glm::normalize(basis * nLocal));
+        }
+    }
+
+    // --- Build triangles ---
+    for (int u = 0; u < segU; ++u) {
+        for (int v = 0; v < segV; ++v) {
+            int i0 = u * (segV + 1) + v;
+            int i1 = i0 + 1;
+            int i2 = i0 + (segV + 1);
+            int i3 = i2 + 1;
+
+            idx.push_back(i0); idx.push_back(i2); idx.push_back(i1);
+            idx.push_back(i1); idx.push_back(i2); idx.push_back(i3);
+        }
+    }
+
+    // --- Load mesh ---
+    RenderableMesh mesh;
+    mesh.load(verts, norms, idx);
+    seg.mesh = mesh;
+
+    seg.body = physics.addTriangleMesh(verts, idx, glm::vec3(0), glm::vec3(0));
+
+    // --- Connection points ---
+    seg.entryPos = glm::vec3(0, 0, 0);
+    seg.entryForward = glm::vec3(0, 0, 1);
+
+    float xExit = radius * (cos(arc) - 1.0f);
+    float zExit = radius * sin(arc);
+    float yExit = -drop;
+
+    seg.exitPos = glm::vec3(xExit, yExit, zExit);
+    glm::vec3 exitForward(-sin(arc), 0, cos(arc));
+    seg.exitForward = glm::normalize(exitForward);
+    seg.exitUp = glm::normalize(lastBasis * glm::vec3(0, 1, 0));
+
+    return seg;
 }
 

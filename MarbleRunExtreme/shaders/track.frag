@@ -4,9 +4,9 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 
-uniform vec3 lightPos;    // world-space light
-uniform vec3 viewPos;     // camera position
-uniform vec3 objectColor; // base color
+uniform vec3 lightPos;
+uniform vec3 viewPos;
+uniform vec3 objectColor;
 
 void main()
 {

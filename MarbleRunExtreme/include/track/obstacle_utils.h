@@ -5,9 +5,8 @@
 #include "track_segment.h"
 #include "physics.h"
 
-
 struct Obstacle {
-    BoxEntity* box = nullptr;   // dynamic entity
+    BoxEntity* box = nullptr;
 };
 
 
@@ -25,4 +24,3 @@ inline Obstacle buildObstacle(
 
     return o;
 }
-

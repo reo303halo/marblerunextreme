@@ -22,6 +22,7 @@
 #include "box_entity.h"
 #include "track.h"
 #include "track_utils.h"
+#include "finish_trigger.h"
 
 // Bullet
 #include <bullet/btBulletDynamicsCommon.h>
@@ -48,168 +49,233 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Marble Run Extreme", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create window\n";
         glfwTerminate();
         return -1;
     }
-
+    
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetWindowUserPointer(window, &camera);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+    
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW\n";
         return -1;
     }
-
+    
     glEnable(GL_DEPTH_TEST);
-
+    
     // ---------------- Shaders ----------------
     GLuint skyboxProgram = createShaderProgram("shaders/skybox.vert", "shaders/skybox.frag");
     GLuint marbleProgram = createShaderProgram("shaders/marble.vert", "shaders/marble.frag");
     GLuint trackProgram = createShaderProgram("shaders/track.vert", "shaders/track.frag");
-
+    
     // ---------------- Scene Objects ----------------
     Skybox skybox(SKYBOX_IMAGE);
-
+    
     // ---------------- Bullet Physics ----------------
     PhysicsWorld physics;
     //physics.addGround(); // Used for testing
     
-    
     // ---------------- Track and Marble Setup ----------------
-    
     Track track;
-    track.addSegment(buildCurvedSegment(physics, 180.0f, 15.0f));
+    TrackSegment funnelSeg = buildFunnelSegment(
+        physics,
+        180.0f,
+        10.0f,
+        30.0f,
+        20.0f,
+        3.0f,
+        5.0f
+    );
+    track.addSegment(funnelSeg);
+    //track.addSegment(buildCurvedSegment(physics, 180.0f, 15.0f));
     
     std::vector<MarbleEntity> marbles;
     MarbleEntity* playerMarble = nullptr;
-
+    
     // Random engine setup
     std::random_device rd;
     std::mt19937 gen(rd());
-
+    
     // Random property distributions
     std::uniform_real_distribution<float> colorDist(0.2f, 1.0f);
     std::uniform_real_distribution<float> radiusDist(0.3f, 0.7f);
     std::uniform_real_distribution<float> massDist(0.5f, 4.0f);
-
+    
     // Random position offsets relative to player spawn
     std::uniform_real_distribution<float> offsetXZ(-2.0f, 2.0f);
     std::uniform_real_distribution<float> offsetY(-1.0f, 1.0f);
-
+    
     const int NUM_MARBLES = 25;
-
+    
     // Player marble spawn
     glm::vec3 spawnCenter(31.0f, 26.0f, 1.0f);
     marbles.emplace_back(spawnCenter,
                          glm::vec3(0.2f, 0.6f, 1.0f),
                          0.5f, 1.0f, physics);
     playerMarble = &marbles.back();
-
+    
     // Generate random marbles around player spawn
     for (int i = 0; i < NUM_MARBLES - 1; ++i) {
         glm::vec3 pos(
-            spawnCenter.x + offsetXZ(gen),
-            spawnCenter.y + offsetY(gen),
-            spawnCenter.z + offsetXZ(gen)
-        );
+                      spawnCenter.x + offsetXZ(gen),
+                      spawnCenter.y + offsetY(gen),
+                      spawnCenter.z + offsetXZ(gen)
+                      );
         glm::vec3 color(colorDist(gen), colorDist(gen), colorDist(gen));
         float radius = radiusDist(gen);
         float mass = massDist(gen);
-
+        
         marbles.emplace_back(pos, color, radius, mass, physics);
     }
     
     // Move entire track so entry is at the marble spawn point
     float trackXOffset = 0.0f;
     float trackYOffset = -17.0f;
-    float trackZOffset = -2.0f;
+    float trackZOffset = -10.0f;
     
     glm::vec3 trackStartPos = spawnCenter + glm::vec3(trackXOffset, trackYOffset, trackZOffset);
-
-    track.segments[0].setWorldTransform(
-        glm::translate(glm::mat4(1.0f), trackStartPos));
+    
+    track.segments[0].setWorldTransform(glm::translate(glm::mat4(1.0f), trackStartPos));
     
     track.addSegment(buildCurvedSegment(physics, 360.0f, 15.0f));
     track.addSegment(buildCurvedSegment(physics,  100.0f));
-    track.addSegment(buildCurvedSegment(physics, -100.0f, 15.0f, -30.0f));
-    
+    track.addSegment(buildCurvedSegment(physics, -100.0f, 15.0f, -40.0f));
     
     float straigthLength = 60.0f;
     float straigthWidth = 15.0f;
     
     track.addSegment(buildStraightSegment(physics, straigthLength, -20.0f, 1.0f, straigthWidth));
-
+    
     // Access the last added segment
     TrackSegment& straight = track.segments.back();
     auto obstacles = generateSlotMachineObstacles(physics, straight, straigthLength, straigthWidth, 15);
     track.addSegment(buildStraightSegment(physics, straigthLength - 20.0f, 20.0f, 2.0f, straigthWidth));
-
     
-    // ---------------- Light ----------------
+    // Finish trigger
+    TrackSegment& lastSeg = track.segments.back();
+    lastSeg.body->setCollisionFlags(
+                                    lastSeg.body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE
+                                    );
+    
+    MarbleEntity* winnerMarble = nullptr;
+    bool winnerDeclared = false;
+    
+    // ---------------- Light and Camera----------------
     glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
-
+    camera.movementSpeed = 10.0f;
+    
     // ---------------- Render Loop ----------------
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
+        
         processInput(window, camera, deltaTime);
-
+        
         // Step physics
         physics.step(deltaTime);
-
+        
         // Update all marbles
         for (auto& m : marbles)
             m.updateFromPhysics(physics);
+        
+        // ---------------- Check for winner ----------------
+        if (!winnerDeclared) {
+            for (auto& m : marbles) {
+                struct WinnerCallback : public btCollisionWorld::ContactResultCallback {
+                    btCollisionObject* targetSegment;
+                    bool hit = false;
+                    WinnerCallback(btCollisionObject* seg) : targetSegment(seg) {}
+                    btScalar addSingleResult(btManifoldPoint& cp,
+                                             const btCollisionObjectWrapper* colObj0Wrap, int partId0, int index0,
+                                             const btCollisionObjectWrapper* colObj1Wrap, int partId1, int index1) override
+                    {
+                        // Only trigger if collision is with the target segment
+                        if (colObj0Wrap->getCollisionObject() == targetSegment ||
+                            colObj1Wrap->getCollisionObject() == targetSegment)
+                        {
+                            hit = true;
+                        }
+                        return 0; // continue
+                    }
+                };
+
+                WinnerCallback callback(lastSeg.body);
+                physics.getWorld()->contactTest(m.body, callback);
+
+                if (callback.hit) {
+                    winnerMarble = &m;
+                    winnerDeclared = true;
+
+                    std::cout << "WINNER detected! Marble at position: "
+                              << m.renderable.position.x << ", "
+                              << m.renderable.position.y << ", "
+                              << m.renderable.position.z << std::endl;
+
+                    // Stop winner marble
+                    m.body->setLinearVelocity(btVector3(0,0,0));
+                    m.body->setAngularVelocity(btVector3(0,0,0));
+                    m.body->setActivationState(DISABLE_SIMULATION);
+                    break;
+                }
+            }
+        }
 
         // ---------------- Clear screen ----------------
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (float)winWidth / (float)winHeight, 0.1f, 500.0f);
-
+                                                (float)winWidth / (float)winHeight, 0.1f, 500.0f);
+        
         // ---------------- Update light ----------------
         float lightSpeed = 0.2f;
         lightPos.x = 2.0f * sin(glfwGetTime() * lightSpeed);
         lightPos.z = 2.0f * cos(glfwGetTime() * lightSpeed);
-
+        
         // ---------------- Render scene ----------------
+        
+        // --- MARBLE SHADER ---
         glUseProgram(marbleProgram);
         glUniform3fv(glGetUniformLocation(marbleProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(marbleProgram, "viewPos"), 1, glm::value_ptr(camera.position));
-
+        
+        // Draw marbles
+        for (auto& m : marbles) {
+            bool isWinner = (&m == winnerMarble);
+            glUniform1i(glGetUniformLocation(marbleProgram, "highlight"), isWinner ? 1 : 0);
+            m.renderable.draw(marbleProgram, view, projection);
+        }
+        
+        // --- TRACK SHADER ---
         glUseProgram(trackProgram);
         glUniform3fv(glGetUniformLocation(trackProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(trackProgram, "viewPos"), 1, glm::value_ptr(camera.position));
         glUniform3fv(glGetUniformLocation(trackProgram, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.2f)));
-
-        for (auto& m : marbles)
-            m.renderable.draw(marbleProgram, view, projection);
-
-        glUseProgram(trackProgram);
+        
+        // Draw track pieces
         for (auto& seg : track.segments)
             seg.mesh.draw(trackProgram, seg.worldTransform, view, projection);
-
+        
+        // Draw obstacles
         for (auto& o : obstacles)
             o.box->draw(trackProgram, view, projection);
-
+        
+        // --- SKYBOX ---
         skybox.draw(view, projection, skyboxProgram);
-
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
+    
     glfwTerminate();
     return 0;
 }
-

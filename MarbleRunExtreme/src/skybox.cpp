@@ -136,4 +136,3 @@ GLuint Skybox::loadCubemapFromAtlas(const std::string& atlasPath) {
     stbi_image_free(data);
     return textureID;
 }
-
