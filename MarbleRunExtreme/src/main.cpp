@@ -145,20 +145,40 @@ int main() {
     track.segments[0].setWorldTransform(glm::translate(glm::mat4(1.0f), trackStartPos));
     
     track.addSegment(buildCurvedSegment(physics, 360.0f, 15.0f));
+    track.addSegment(buildCurvedSegment(physics, -360.0f, 15.0f, -40.0f));
     track.addSegment(buildCurvedSegment(physics,  100.0f));
     track.addSegment(buildCurvedSegment(physics, -100.0f, 15.0f, -40.0f));
     
     float straigthLength = 60.0f;
-    float straigthWidth = 15.0f;
+    float straigthWidth = 30.0f;
     
-    track.addSegment(buildStraightSegment(physics, straigthLength, -20.0f, 1.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, straigthLength, -10.0f, 1.0f, straigthWidth));
     
     // Access the last added segment
     TrackSegment& straight = track.segments.back();
-    auto obstacles = generateSlotMachineObstacles(physics, straight, straigthLength, straigthWidth, 15);
-    track.addSegment(buildStraightSegment(physics, straigthLength - 20.0f, 20.0f, 2.0f, straigthWidth));
+    auto obstacles = generateSlotMachineObstacles(physics, straight, straigthLength, straigthWidth  - 15.0f, 15);
     
-    // Finish trigger
+    track.addSegment(buildStraightSegment(physics, 10.0f, 10.0f, 2.0f, straigthWidth));
+    
+    // Adding a stair / steps
+    float stepLength = 5.0f;
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 4.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, -90.0f, 2.0f, straigthWidth));
+    track.addSegment(buildStraightSegment(physics, stepLength, 90.0f, 2.0f, straigthWidth));
+    
+    // Finish trigger and last step /goal
+    track.addSegment(buildStraightSegment(physics, straigthLength - 20.0f, 0.0f, 2.0f, straigthWidth));
     TrackSegment& lastSeg = track.segments.back();
     lastSeg.body->setCollisionFlags(
                                     lastSeg.body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE
